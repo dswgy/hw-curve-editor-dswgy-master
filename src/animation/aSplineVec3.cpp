@@ -290,9 +290,15 @@ void AInterpolatorVec3::interpolate(const std::vector<ASplineVec3::Key>& keys,
     {
         for (double t = keys[segment].first; t < keys[segment+1].first - FLT_EPSILON; t += mDt)
         {
-			// TODO: Compute u, fraction of duration between segment and segmentnext, for example,
+			// TODO: Compute u, fraction of duration between segment and segment next, for example,
 			// u = 0.0 when t = keys[segment-1].first  
 			// u = 1.0 when t = keys[segment].first
+
+			//if (segment > 0) {
+			//
+			//	u = (t - keys[segment - 1].first) / (keys[segment].first - keys[segment - 1].first);
+			//}
+			u = (t - keys[segment].first) / (keys[segment + 1].first - keys[segment].first);
 
             val = interpolateSegment(keys, ctrlPoints, segment, u);
             curve.push_back(val);
@@ -319,6 +325,10 @@ vec3 ALinearInterpolatorVec3::interpolateSegment(
 	vec3 key1 = keys[segment + 1].second;
 
 	// TODO: Linear interpolate between key0 and key1 so that u = 0 returns key0 and u = 1 returns key1
+
+	curveValue = key0 * (1 - u) + key1 * u;
+
+
 	return curveValue;
 }
 
@@ -335,6 +345,13 @@ vec3 ABernsteinInterpolatorVec3::interpolateSegment(
 	// TODO: 
 	// Step1: Get the 4 control points, b0, b1, b2 and b3 from the ctrlPoints vector
 	// Step2: Compute the interpolated value f(u) point using  Bernstein polynomials
+
+	b0 = ctrlPoints[4 * segment];
+	b1 = ctrlPoints[4 * segment + 1];
+	b2 = ctrlPoints[4 * segment + 2];
+	b3 = ctrlPoints[4 * segment + 3];
+
+	curveValue = pow((1 - u), 3) * b0 + 3 * u * pow((1 - u), 2) * b1 + 3 * pow(u, 2) * b2 * (1 - u) + pow(u, 3) * b3;
 
 	return curveValue;
 }
@@ -353,7 +370,20 @@ vec3 ACasteljauInterpolatorVec3::interpolateSegment(
 	// TODO: 
 	// Step1: Get the 4 control points, b0, b1, b2 and b3 from the ctrlPoints vector
 	// Step2: Compute the interpolated value f(u) point using  deCsteljau alogithm
+	b0 = ctrlPoints[4 * segment];
+	b1 = ctrlPoints[4 * segment + 1];
+	b2 = ctrlPoints[4 * segment + 2];
+	b3 = ctrlPoints[4 * segment + 3];
 
+	vec3 b_1_0 = LerpVec3(b0, b1, u);
+	vec3 b_1_1 = LerpVec3(b1, b2, u);
+	vec3 b_1_2 = LerpVec3(b2, b3, u);
+	vec3 b_2_0 = LerpVec3(b_1_0, b_1_1, u);
+	vec3 b_2_1 = LerpVec3(b_1_1, b_1_2, u);
+	vec3 b_3_0 = LerpVec3(b_2_0, b_2_1, u);
+
+	curveValue = b_3_0;
+	
 	return curveValue;
 }
 
@@ -425,6 +455,109 @@ void ACubicInterpolatorVec3::computeControlPoints(
     {
         vec3 b0, b1, b2, b3;
 		// TODO: compute b0, b1, b2, b3
+
+		// when i = 1, start at segment 0
+		if (i < (keys.size() - 1) && i > 1) {
+		vec3 p0 = keys[i - 2].second;
+		vec3 p1 = keys[i - 1].second;
+		vec3 p2 = keys[i].second;
+		vec3 p3 = keys[i + 1].second;
+		double t0 = keys[i - 2].first;
+		double t1 = keys[i - 1].first;
+		double t2 = keys[i].first;
+		double t3 = keys[i + 1].first;
+
+		// slope at p1 by averaging slope on the left and right
+		vec3 s_left_p1 = (p1 - p0) / (t1 - t0);
+		vec3 s_right_p1 = (p2 - p1) / (t2 - t1);
+		vec3 s1 = (s_left_p1 + s_right_p1) / 2;
+
+		// slope at p2 by averaging slope on the left and right
+		vec3 s_left_p2 = (p2 - p1) / (t2 - t1);
+		vec3 s_right_p2 = (p3 - p2) / (t3 - t2);
+		vec3 s2 = (s_left_p2 + s_right_p2) / 2;
+
+		// find b
+		b0 = p1;
+		b3 = p2;
+
+		b1 = b0 + s1 / 3;
+		b2 = b3 - s2 / 3;
+		
+		} // left end point with more than one segment
+		else if (i == 1 && i != (keys.size() - 1)) {
+			vec3 p1 = keys[i - 1].second;
+			vec3 p2 = keys[i].second;
+			vec3 p3 = keys[i + 1].second;
+
+			double t1 = keys[i - 1].first;
+			double t2 = keys[i].first;
+			double t3 = keys[i + 1].first;
+
+			// slope at p1 is only the slope from right
+			vec3 s_right_p1 = (p2 - p1) / (t2 - t1);
+			vec3 s1 = (s_right_p1) / 1;
+
+			// slope at p2 by averaging slope on the left and right
+			vec3 s_left_p2 = (p2 - p1) / (t2 - t1);
+			vec3 s_right_p2 = (p3 - p2) / (t3 - t2);
+			vec3 s2 = (s_left_p2 + s_right_p2) / 2;
+
+			// find b
+			b0 = p1;
+			b3 = p2;
+
+			b1 = b0 + s1 / 3;
+			b2 = b3 - s2 / 3;
+
+		} // right end point with more than one segment
+		else if (i == (keys.size() - 1) && i != 1) {
+			vec3 p0 = keys[i - 2].second;
+			vec3 p1 = keys[i - 1].second;
+			vec3 p2 = keys[i].second;
+			double t0 = keys[i - 2].first;
+			double t1 = keys[i - 1].first;
+			double t2 = keys[i].first;
+
+			// slope at p1 by averaging slope on the left and right
+			vec3 s_left_p1 = (p1 - p0) / (t1 - t0);
+			vec3 s_right_p1 = (p2 - p1) / (t2 - t1);
+			vec3 s1 = (s_left_p1 + s_right_p1) / 2;
+
+			// slope at p2 only the slope from left
+			vec3 s_left_p2 = (p2 - p1) / (t2 - t1);
+			vec3 s2 = (s_left_p2 ) / 1;
+
+			// find b
+			b0 = p1;
+			b3 = p2;
+
+			b1 = b0 + s1 / 3;
+			b2 = b3 - s2 / 3;
+		}// only one segment
+		else if (i == (keys.size() - 1) && i == 1) {
+			vec3 p1 = keys[i - 1].second;
+			vec3 p2 = keys[i].second;
+			double t1 = keys[i - 1].first;
+			double t2 = keys[i].first;
+
+			// slope at p1 by averaging slope on the left and right
+			vec3 s_right_p1 = (p2 - p1) / (t2 - t1);
+			vec3 s1 = (s_right_p1) / 1;
+
+			// slope at p2 only the slope from left
+			vec3 s_left_p2 = (p2 - p1) / (t2 - t1);
+			vec3 s2 = (s_left_p2) / 1;
+
+			// find b
+			b0 = p1;
+			b3 = p2;
+
+			b1 = b0 + s1 / 3;
+			b2 = b3 - s2 / 3;
+		}
+		
+
 
         ctrlPoints.push_back(b0);
         ctrlPoints.push_back(b1);
@@ -554,3 +687,5 @@ void AEulerCubicInterpolatorVec3::computeControlPoints(
 		ctrlPoints.push_back(b3);
 	}
 }
+
+

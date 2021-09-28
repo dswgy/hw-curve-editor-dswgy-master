@@ -220,3 +220,7 @@ vec3 operator - (const vec3& a)
     return s;
 }
 
+ vec3 LerpVec3(vec3 a, vec3 b, double t)
+ {
+     return a + t * (b - a);
+ }
