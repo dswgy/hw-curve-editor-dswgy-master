@@ -403,6 +403,38 @@ vec3 AMatrixInterpolatorVec3::interpolateSegment(
 	// Step2: Compute the interpolated value f(u) point using  matrix method f(u) = GMU
 	// Hint: Using Eigen::MatrixXd data representations for a matrix operations
 
+	b0 = ctrlPoints[4 * segment];
+	b1 = ctrlPoints[4 * segment + 1];
+	b2 = ctrlPoints[4 * segment + 2];
+	b3 = ctrlPoints[4 * segment + 3];
+
+	Eigen::MatrixXd M(4,4);
+	M(0, 0) = 1; M(0, 1) = -3; M(0, 2) = 3; M(0, 3) = -1; 
+	M(1, 0) = 0; M(1, 1) = 3; M(1, 2) = -6; M(1, 3) = 3;
+	M(2, 0) = 0; M(2, 1) = 0; M(2, 2) = 3; M(2, 3) = -3;
+	M(3, 0) = 0; M(3, 1) = 0; M(3, 2) = 0; M(3, 3) = 1;
+
+	Eigen::MatrixXd G(3, 4);
+	G(0, 0) = b0[0]; G(0, 1) = b1[0]; G(0, 2) = b2[0]; G(0, 3) = b3[0];
+	G(1, 0) = b0[1]; G(1, 1) = b1[1]; G(1, 2) = b2[1]; G(1, 3) = b3[1];
+	G(2, 0) = b0[2]; G(2, 1) = b1[2]; G(2, 2) = b2[2]; G(2, 3) = b3[2];
+
+	Eigen::MatrixXd V(3, 4);
+	V = G * M;
+
+	Eigen::MatrixXd U(4, 1);
+	U(0, 0) = 1;
+	U(1, 0) = u;
+	U(2, 0) = pow(u, 2);
+	U(3, 0) = pow(u, 3);
+
+	Eigen::MatrixXd fu(3, 1);
+	fu = V * U;
+
+	curveValue[0] = fu(0, 0);
+	curveValue[1] = fu(1, 0);
+	curveValue[2] = fu(2, 0);
+
 	return curveValue;
 }
 
@@ -418,6 +450,16 @@ vec3 AHermiteInterpolatorVec3::interpolateSegment(
 	vec3 curveValue(0, 0, 0);
 
 	// TODO: Compute the interpolated value h(u) using a cubic Hermite polynomial  
+	p0 = keys[segment].second;
+	p1 = keys[segment + 1].second;
+	q0 = ctrlPoints[segment];
+	q1 = ctrlPoints[segment + 1];
+
+	curveValue = (2 * pow(u, 3) - 3 * pow(u, 2) + 1) * p0
+		+ (-2 * pow(u, 3) + 3 * pow(u, 2)) * p1
+		+ (pow(u, 3) - 2 * pow(u, 2) + u) * q0
+		+ (pow(u, 3) - pow(u, 2)) * q1;
+
 
 	return curveValue;
 }
@@ -593,6 +635,164 @@ void AHermiteInterpolatorVec3::computeControlPoints(
 	// Use operator[] to set elements in ctrlPoints by indices
 
 	// Hint: Do not use push_back() to insert control points here because the vector has been resized
+	
+
+	// step 0 choose natural or clamp end points;
+	bool ifNatural = true;
+	//Step 1: Initialize A
+	int N = keys.size() - 1;
+	Eigen::MatrixXd A(N + 1, N + 1);
+
+	//clamp end points
+	if (!ifNatural) {
+		for (int row = 0; row < N + 1; row++) {
+			for (int col = 0; col < N + 1; col++) {
+
+				// first row of A
+				if (row == 0) {
+					if (col == 0) {
+						A(row, col) = 1;
+					}
+					else {
+						A(row, col) = 0;
+					}
+				}// last row of A
+				else if (row == N) {
+					if (col == N) {
+						A(row, col) = 1;
+					}
+					else {
+						A(row, col) = 0;
+					}
+				}// other rows
+				else {
+					// insert first 1 in each row
+					if (col == (row - 1)) {
+						A(row, col) = 1;
+					}
+					else if (col == (row)) {
+						A(row, col) = 4;
+					}
+					else if (col == (row + 1)) {
+						A(row, col) = 1;
+					}
+					else {
+						A(row, col) = 0;
+					}
+				}
+			}
+		}
+	}
+	// natural end points
+	else {
+		for (int row = 0; row < N + 1; row++) {
+			for (int col = 0; col < N + 1; col++) {
+				// first row of A
+				if (row == 0) {
+					if (col == 0) {
+						A(row, col) = 4;
+					}
+					else if (col == 1) {
+						A(row, col) = 2;
+					}
+					else {
+						A(row, col) = 0;
+					}
+				}// last row of A
+				else if (row == N) {
+					if (col == N - 1) {
+						A(row, col) = 2;
+					}
+					else if (col == N) {
+						A(row, col) = 4;
+					}
+					else {
+						A(row, col) = 0;
+					}
+				}// other rows
+				else {
+					// insert first 1 in each row
+					if (col == (row - 1)) {
+						A(row, col) = 1;
+					}
+					else if (col == (row)) {
+						A(row, col) = 4;
+					}
+					else if (col == (row + 1)) {
+						A(row, col) = 1;
+					}
+					else {
+						A(row, col) = 0;
+					}
+				}
+			}
+		}
+	}
+
+	// Step 2: Initialize D
+	//vec3 s0 = (keys[1].second - keys[0].second) / (keys[1].first - keys[0].first);
+	//vec3 s1 = (keys[N].second - keys[N - 1].second) / (keys[N].first - keys[N - 1].first);
+	vec3 s0 = (keys[1].second - keys[0].second) / 1;
+	vec3 s1 = (keys[N].second - keys[N - 1].second) / 1;
+
+	Eigen::MatrixXd D(N + 1, 3);
+
+	// clamp end points
+	if (!ifNatural) {
+		for (int row = 0; row < N + 1; row++) {
+			// first row
+			if (row == 0) {
+				D(row, 0) = s0[0];
+				D(row, 1) = s0[1];
+				D(row, 2) = s0[2];
+			}// last row of A
+			else if (row == N) {
+				D(row, 0) = s1[0];
+				D(row, 1) = s1[1];
+				D(row, 2) = s1[2];
+			}// other rows
+			else {
+				D(row, 0) = (3 * (keys[row + 1].second - keys[row - 1].second))[0];
+				D(row, 1) = (3 * (keys[row + 1].second - keys[row - 1].second))[1];
+				D(row, 2) = (3 * (keys[row + 1].second - keys[row - 1].second))[2];
+			}
+		}
+	}
+	// natrual end points
+	else {
+		for (int row = 0; row < N + 1; row++) {
+			// first row
+			if (row == 0) {
+				D(row, 0) = (6 * (keys[row + 1].second - keys[row].second))[0];
+				D(row, 1) = (6 * (keys[row + 1].second - keys[row].second))[1];
+				D(row, 2) = (6 * (keys[row + 1].second - keys[row].second))[2];
+			}// last row of A
+			else if (row == N) {
+				D(row, 0) = (6 * (keys[row].second - keys[row - 1].second))[0];
+				D(row, 1) = (6 * (keys[row].second - keys[row - 1].second))[1];
+				D(row, 2) = (6 * (keys[row].second - keys[row - 1].second))[2];
+			}// other rows
+			else {
+				D(row, 0) = (3 * (keys[row + 1].second - keys[row - 1].second))[0];
+				D(row, 1) = (3 * (keys[row + 1].second - keys[row - 1].second))[1];
+				D(row, 2) = (3 * (keys[row + 1].second - keys[row - 1].second))[2];
+			}
+		}
+	}
+
+
+	// Step 3: Solve AC=D for C
+	Eigen::MatrixXd C(N + 1, 3);
+
+	C = (A.inverse()) * D;
+
+	// Step 4: Save control points in ctrlPoints
+	for (int i = 0; i < keys.size(); i++) {
+		ctrlPoints[i][0] = C(i, 0);
+		ctrlPoints[i][1] = C(i, 1);
+		ctrlPoints[i][2] = C(i, 2);
+	}
+
 
 }
 
@@ -629,6 +829,11 @@ void ABSplineInterpolatorVec3::computeControlPoints(
 	// Step 5: save control points in ctrlPoints
 
 	// Hint: Do not use push_back() to insert control points here because the vector has been resized
+
+
+
+	//
+
 }
 
 
