@@ -66,10 +66,15 @@ void CurveViewer::createGUIWindow()
 		ImGui::Combo("Type", &mCurrentSplineVec3Type, splineTypes, IM_ARRAYSIZE(splineTypes));
 		updateSplineVec3Type(mCurrentSplineVec3Type, mSplineVec3);
 
+		if (mIfNatural != mCurrentNatural) {
+			updateSplineCurrentType(mSplineVec3);
+			mCurrentNatural = mIfNatural;
+		}
+
 		// Reset curve
 		ImGui::Checkbox("Show Control Point", &mShowControlPoint);
 		ImGui::Checkbox("Animate", &mAnimate);
-		ImGui::Checkbox("setNatural", &mSetNatural);
+		//ImGui::Checkbox("setNatural", &mSetNatural);
 		if (ImGui::Button("Reset"))
 		{
 			resetSplineVec3(mSplineVec3);
@@ -151,6 +156,10 @@ void CurveViewer::drawScene()
 		glEnable(GL_DEPTH_TEST);
 		drawRotatedModel(mSplineEuler, mSplineQuat);
 	}
+}
+
+void CurveViewer::updateSplineCurrentType(ASplineVec3& spline) {
+	spline.setInterpolationType(spline.getInterpolationType());
 }
 
 void CurveViewer::updateSplineVec3Type(int newtype, ASplineVec3& spline)

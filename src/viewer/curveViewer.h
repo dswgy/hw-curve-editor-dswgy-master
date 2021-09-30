@@ -22,6 +22,7 @@ protected:
 	void updateSplineVec3Type(int newtype, ASplineVec3& spline);
 	void updateSplineQuatType(int newtype, ASplineQuat& spline);
 	void updateSplineEulerType(int newtype, ASplineVec3& spline);
+	void updateSplineCurrentType(ASplineVec3& spline);
 
 	void drawKeyPoints(const ASplineVec3& spline);
 	void drawControlPoints(const ASplineVec3& spline);
@@ -46,7 +47,7 @@ protected:
 	bool mShowControlPoint;
 	bool mAnimate;
 	bool mHoldLeftMouseButton;
-	bool mSetNatural;
+	bool mSetNatural = false;
 
 	ASplineVec3 mSplineVec3;
 	ASplineVec3 mSplineEuler;
@@ -54,6 +55,7 @@ protected:
 
 	int mDemo = 0;	// 0 for spline, 1 for rotation
 	int mIfNatural = 0;//0 for clamp, 1 for natural
+	int mCurrentNatural = 0;
 
 	std::unique_ptr<Drawable> mKeyPoints;
 	std::unique_ptr<Drawable> mCurveLine;
