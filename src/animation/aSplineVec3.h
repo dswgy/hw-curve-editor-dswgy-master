@@ -15,6 +15,8 @@ public:
 							 LINEAR_EULER, CUBIC_EULER };
     typedef std::pair<double, vec3> Key;
 
+    bool ifNatural;
+
 public:
     ASplineVec3();
     virtual ~ASplineVec3();

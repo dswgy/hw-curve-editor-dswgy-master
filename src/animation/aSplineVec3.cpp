@@ -638,7 +638,7 @@ void AHermiteInterpolatorVec3::computeControlPoints(
 	
 
 	// step 0 choose natural or clamp end points;
-	bool ifNatural = true;
+	//bool ifNatural = true;
 	//Step 1: Initialize A
 	int N = keys.size() - 1;
 	Eigen::MatrixXd A(N + 1, N + 1);
