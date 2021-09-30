@@ -692,10 +692,10 @@ void AHermiteInterpolatorVec3::computeControlPoints(
 				// first row of A
 				if (row == 0) {
 					if (col == 0) {
-						A(row, col) = 4;
+						A(row, col) = 2;
 					}
 					else if (col == 1) {
-						A(row, col) = 2;
+						A(row, col) = 1;
 					}
 					else {
 						A(row, col) = 0;
@@ -703,10 +703,10 @@ void AHermiteInterpolatorVec3::computeControlPoints(
 				}// last row of A
 				else if (row == N) {
 					if (col == N - 1) {
-						A(row, col) = 2;
+						A(row, col) = 1;
 					}
 					else if (col == N) {
-						A(row, col) = 4;
+						A(row, col) = 2;
 					}
 					else {
 						A(row, col) = 0;
@@ -732,10 +732,10 @@ void AHermiteInterpolatorVec3::computeControlPoints(
 	}
 
 	// Step 2: Initialize D
-	//vec3 s0 = (keys[1].second - keys[0].second) / (keys[1].first - keys[0].first);
-	//vec3 s1 = (keys[N].second - keys[N - 1].second) / (keys[N].first - keys[N - 1].first);
-	vec3 s0 = (keys[1].second - keys[0].second) / 1;
-	vec3 s1 = (keys[N].second - keys[N - 1].second) / 1;
+	vec3 s0 = (keys[1].second - keys[0].second) / (keys[1].first - keys[0].first);
+	vec3 s1 = (keys[N].second - keys[N - 1].second) / (keys[N].first - keys[N - 1].first);
+	//vec3 s0 = (keys[1].second - keys[0].second) / 1;
+	//vec3 s1 = (keys[N].second - keys[N - 1].second) / 1;
 
 	Eigen::MatrixXd D(N + 1, 3);
 
@@ -765,14 +765,14 @@ void AHermiteInterpolatorVec3::computeControlPoints(
 		for (int row = 0; row < N + 1; row++) {
 			// first row
 			if (row == 0) {
-				D(row, 0) = (6 * (keys[row + 1].second - keys[row].second))[0];
-				D(row, 1) = (6 * (keys[row + 1].second - keys[row].second))[1];
-				D(row, 2) = (6 * (keys[row + 1].second - keys[row].second))[2];
+				D(row, 0) = (3 * (keys[row + 1].second - keys[row].second))[0];
+				D(row, 1) = (3 * (keys[row + 1].second - keys[row].second))[1];
+				D(row, 2) = (3 * (keys[row + 1].second - keys[row].second))[2];
 			}// last row of A
 			else if (row == N) {
-				D(row, 0) = (6 * (keys[row].second - keys[row - 1].second))[0];
-				D(row, 1) = (6 * (keys[row].second - keys[row - 1].second))[1];
-				D(row, 2) = (6 * (keys[row].second - keys[row - 1].second))[2];
+				D(row, 0) = (3 * (keys[row].second - keys[row - 1].second))[0];
+				D(row, 1) = (3 * (keys[row].second - keys[row - 1].second))[1];
+				D(row, 2) = (3 * (keys[row].second - keys[row - 1].second))[2];
 			}// other rows
 			else {
 				D(row, 0) = (3 * (keys[row + 1].second - keys[row - 1].second))[0];
