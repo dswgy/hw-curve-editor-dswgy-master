@@ -44,8 +44,20 @@ void CurveViewer::createGUIWindow()
 	ImGui::RadioButton("Spline Curve", &mDemo, 0); ImGui::SameLine();
 	ImGui::RadioButton("Rotation", &mDemo, 1); 
 
+	ImGui::RadioButton("clamp", &mIfNatural, 0); ImGui::SameLine();
+	ImGui::RadioButton("natural", &mIfNatural, 1);
+
+
 	if (mDemo == 0)	// SplineVec3
 	{
+		if (mIfNatural == 1) {
+			mSplineVec3.ifNatural = true;
+		}
+		else if (mIfNatural == 0) {
+			mSplineVec3.ifNatural = false;
+		}
+
+
 		// Curve Type
 		const char* splineTypes[] = { "Linear", "Berstein-Bezier", "Casteljau-Bezier",
 			"Matrix-Bezier", "Hermite", "BSpline" };
@@ -57,6 +69,7 @@ void CurveViewer::createGUIWindow()
 		// Reset curve
 		ImGui::Checkbox("Show Control Point", &mShowControlPoint);
 		ImGui::Checkbox("Animate", &mAnimate);
+		ImGui::Checkbox("setNatural", &mSetNatural);
 		if (ImGui::Button("Reset"))
 		{
 			resetSplineVec3(mSplineVec3);
@@ -121,6 +134,12 @@ void CurveViewer::drawScene()
 	if (mDemo == 0)
 	{
 		glDisable(GL_DEPTH_TEST);
+		if (mIfNatural == 1) {
+			mSplineVec3.ifNatural = true;
+		}
+		else if (mIfNatural == 0) {
+			mSplineVec3.ifNatural = false;
+		}
 		drawCurve(mSplineVec3);
 		drawControlPointLine(mSplineVec3);
 		drawControlPoints(mSplineVec3);
@@ -199,6 +218,7 @@ void CurveViewer::drawControlPoints(const ASplineVec3 & spline)
 	{
 		return;
 	}
+	
 
 	// Create vertices vector
 	auto type = spline.getInterpolationType();

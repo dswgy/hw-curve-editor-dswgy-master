@@ -234,6 +234,8 @@ void ASplineVec3::computeControlPoints(bool updateEndPoints)
 		n = tmp.Length();
 		mEndPoint = mKeys[totalPoints - 1].second + (tmp / n) * n * 0.25;
 	}
+	//ifNatural = false;
+	mInterpolator->ifNatural = ifNatural;
     mInterpolator->computeControlPoints(mKeys, mCtrlPoints, mStartPoint, mEndPoint);
 }
 

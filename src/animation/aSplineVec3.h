@@ -71,6 +71,7 @@ protected:
 class AInterpolatorVec3
 {
 public:
+    bool ifNatural;
     virtual ~AInterpolatorVec3() {}
     ASplineVec3::InterpolationType getType() const { return mType;  }
 
