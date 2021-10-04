@@ -219,8 +219,30 @@ bool mat3::ToEulerAngles(RotOrder order, vec3& angleRad) const
 
 	case YXZ:
 		//TODO: student implementation for computing Euler angles from a rotation matrix with an YXZ order of rotation goes here
-		angleRad = vec3(0.0, 0.0, 0.0);
-		result = false;
+        angleRad[VX] = asin(-mM[1][2]);
+        if (angleRad[VX] > -M_PI_2 + EPSILON)
+        {
+            if (angleRad[VX] < M_PI_2 - EPSILON)
+            {
+                angleRad[VY] = atan2(mM[0][2], mM[2][2]);
+                angleRad[VZ] = atan2(mM[1][0], mM[1][1]);
+                result = true;
+            }
+            else
+            {
+                // WARNING.  Not a unique solution.
+                angleRad[VZ] = 0.0f;
+                angleRad[VY] = -atan2(-mM[0][1], mM[0][0]);
+                result = false;
+            }
+        }
+        else
+        {
+            // WARNING.  Not a unique solution.
+            angleRad[VZ] = 0.0f;
+            angleRad[VY] = atan2(-mM[0][1], mM[0][0]);
+            result = false;
+        }
 
 		break;
 	}
@@ -264,8 +286,9 @@ mat3 mat3::FromEulerAngles(RotOrder order, const vec3& anglesRad)
 
 	case YXZ:
 		//TODO: student implementation for computing rotation matrix for YXZ order of rotation goes here
-		m.Identity();
-
+        m = mat3::Rotation3D(axisY, anglesRad[VY])
+            * mat3::Rotation3D(axisX, anglesRad[VX])
+            * mat3::Rotation3D(axisZ, anglesRad[VZ]);
 		break;
 	}
 	*this = m;
@@ -1049,7 +1072,106 @@ void quat::FromRotation(const mat3& rot)
 {
 	mQ[VW] = 0.0; mQ[VX] = 1.0; mQ[VY] = 0.0;  mQ[VZ] = 0.0;
 	//TODO: student implementation for converting from rotation matrix to quat goes here
-	
+
+    //
+    double t = 0.0;
+    quat q;
+
+    double m00 = rot[0][0]; double m01 = rot[0][1]; double m02 = rot[0][2];
+    double m10 = rot[1][0]; double m11 = rot[1][1]; double m12 = rot[1][2];
+    double m20 = rot[2][0]; double m21 = rot[2][1]; double m22 = rot[2][2];
+
+    
+    mQ[VW] = 0.5 * sqrt(1 + m00 + m11 + m22);
+
+    //mQ[VX] = (m21 - m12) / (4.0 * mQ[VW]);
+    //mQ[VY] = (m02 - m20) / (4.0 * mQ[VW]);
+    //mQ[VZ] = (m10 - m01) / (4.0 * mQ[VW]);
+
+
+    if (abs(mQ[VW]) > EPSILON) {
+        mQ[VX] = (m21 - m12) / (4.0 * mQ[VW]);
+        mQ[VY] = (m02 - m20) / (4.0 * mQ[VW]);
+        mQ[VZ] = (m10 - m01) / (4.0 * mQ[VW]);
+    }
+    else {
+        if (m00 > 0) {
+            mQ[VX] = 1.0;
+            mQ[VY] = 0.0;
+            mQ[VZ] = 0.0;
+        }
+        else if (m11 > 0){
+            mQ[VX] = 0.0;
+            mQ[VY] = 1.0;
+            mQ[VZ] = 0.0;
+        }
+        else if (m22 > 0) {
+            mQ[VX] = 0.0;
+            mQ[VY] = 0.0;
+            mQ[VZ] = 1.0;
+        } 
+    
+    }
+    
+    //if (m22 < 0) {
+    //    if (m00 > m11) {
+    //        t = 1 + m00 - m11 - m22;
+    //        q = quat(t, m01 + m10, m20 + m02, m12 - m21);
+    //    }
+    //    else {
+    //        t = 1 - m00 + m11 - m22;
+    //        q = quat(m01 + m10, t, m12 + m21, m20 - m02);
+    //    }
+    //}
+    //else {
+    //    if (m00 < -m11) {
+    //        t = 1 - m00 - m11 + m22;
+    //        q = quat(m20 + m02, m12 + m21, t, m01 - m10);
+    //    }
+    //    else {
+    //        t = 1 + m00 + m11 + m22;
+    //        q = quat(m12 - m21, m20 - m02, m01 - m10, t);
+    //    }
+    //}
+    //q *= 0.5 / sqrt(t);
+    //mQ[VW] = q[3];
+    //mQ[VX] = q[0];
+    //mQ[VY] = q[1];
+    //mQ[VZ] = q[2];
+
+    //double trace = rot[0][0] + rot[1][1] + rot[2][2]; // I removed + 1.0f; see discussion with Ethan
+    //if (trace > 0) {// I changed M_EPSILON to 0
+    //    double s = 0.5 / sqrt(trace + 1.0);
+    //    mQ[VW] = 0.25 / s;
+    //    mQ[VX] = (rot[2][1] - rot[1][2]) * s;
+    //    mQ[VY] = (rot[0][2] - rot[2][0]) * s;
+    //    mQ[VZ] = (rot[1][0] - rot[0][1]) * s;
+    //}
+    //else {
+    //    if (rot[0][0] > rot[1][1] && rot[0][0] > rot[2][2]) {
+    //        double s = 2.0 * sqrt(1.0 + rot[0][0] - rot[1][1] - rot[2][2]);
+    //        mQ[VW] = (rot[2][1] - rot[1][2]) / s;
+    //        mQ[VX] = 0.25f * s;
+    //        mQ[VY] = (rot[0][1] + rot[1][0]) / s;
+    //        mQ[VZ] = (rot[0][2] + rot[2][0]) / s;
+    //    }
+    //    else if (rot[1][1] > rot[2][2]) {
+    //        double s = 2.0 * sqrt(1.0f + rot[1][1] - rot[0][0] - rot[2][2]);
+    //        mQ[VW] = (rot[0][2] - rot[2][0]) / s;
+    //        mQ[VX] = (rot[0][1] + rot[1][0]) / s;
+    //        mQ[VY] = 0.25f * s;
+    //        mQ[VZ] = (rot[1][2] + rot[2][1]) / s;
+    //    }
+    //    else {
+    //        double s = 2.0 * sqrt(1.0f + rot[2][2] - rot[0][0] - rot[1][1]);
+    //        mQ[VW] = (rot[1][0] - rot[0][1]) / s;
+    //        mQ[VX] = (rot[0][2] + rot[2][0]) / s;
+    //        mQ[VY] = (rot[1][2] + rot[2][1]) / s;
+    //        mQ[VZ] = 0.25f * s;
+    //    }
+    //}
+    
+
 	Normalize();
 }
 
@@ -1057,6 +1179,25 @@ quat quat::Slerp(const quat& q0, const quat& q1, double u)
 {
 	quat q = q0;
 	//TODO: student implemetation of Slerp goes here
+    //quat q12 = q0.Conjugate() * q1;
+    //double angleRad = Distance(q0, q1);
+    //q = sin((1 - u) * angleRad) * q0 / sin(angleRad) + sin(angleRad * u) * q1 / sin(angleRad);
+
+    //std::cout << "angleRad: " << angleRad << std::endl;
+    //std::cout << "u: " << u << std::endl;
+    //std::cout << "VW0: " << q0.mQ[VW] << std::endl;
+    //std::cout << "VX0: " << q0.mQ[VX] << std::endl;
+    //std::cout << "VY0: " << q0.mQ[VY] << std::endl;
+    //std::cout << "VZ0: " << q0.mQ[VZ] << std::endl;
+    //std::cout << "VW1: " << q1.mQ[VW] << std::endl;
+    //std::cout << "VX1: " << q1.mQ[VX] << std::endl;
+    //std::cout << "VY1: " << q1.mQ[VY] << std::endl;
+    //std::cout << "VZ1: " << q1.mQ[VZ] << std::endl;
+
+
+    quat temp = Exp(u * Log(q0.Conjugate() * q1));
+    q = q0 * temp;
+
 
 	return q.Normalize();
 }
@@ -1169,12 +1310,21 @@ void quat::ToAxisAngle (vec3& axis, double& angleRad) const
 	axis = vec3(1.0, 0.0, 0.0);
 	angleRad = 0.0;
 	//TODO: student implementation for converting quaternion to axis/angle representation goes here
+    angleRad = 2.0 * acos(mQ[VW]);
+    axis[0] = mQ[VX] / sqrt(1.0 - mQ[VW] * mQ[VW]);
+    axis[1] = mQ[VY] / sqrt(1.0 - mQ[VW] * mQ[VW]);
+    axis[2] = mQ[VZ] / sqrt(1.0 - mQ[VW] * mQ[VW]);
 }
 
 void quat::FromAxisAngle (const vec3& axis, double angleRad)
 {
 	//TODO: student implementation for converting from axis/angle to quaternion goes here
-	mQ[VW] = 0.0; mQ[VX] = 1.0; mQ[VY] = 0.0;  mQ[VZ] = 0.0;
+	//mQ[VW] = 0.0; mQ[VX] = 1.0; mQ[VY] = 0.0;  mQ[VZ] = 0.0;
+    
+    mQ[VW] = cos(0.5 * angleRad);
+    mQ[VX] = axis[0] * sin(0.5 * angleRad);
+    mQ[VY] = axis[1] * sin(0.5 * angleRad);
+    mQ[VZ] = axis[2] * sin(0.5 * angleRad);
 }
 
 mat3 quat::ToRotation () const
@@ -1182,6 +1332,9 @@ mat3 quat::ToRotation () const
 	mat3 m;
 	m.Identity();
 	//TODO: student implementation for converting quaternion to rotation matrix goes here
+    m[0][0] = 1.0 - 2.0 * (mQ[VY] * mQ[VY] + mQ[VZ] * mQ[VZ]); m[0][1] = 2.0 * (mQ[VX] * mQ[VY] - mQ[VZ] * mQ[VW]); m[0][2] = 2.0 * (mQ[VX] * mQ[VZ] + mQ[VY] * mQ[VW]);
+    m[1][0] = 2.0 * (mQ[VX] * mQ[VY] + mQ[VZ] * mQ[VW]); m[1][1] = 1.0 - 2.0 * (mQ[VX] * mQ[VX] + mQ[VZ] * mQ[VZ]); m[1][2] = 2.0 * (mQ[VY] * mQ[VZ] - mQ[VX] * mQ[VW]);
+    m[2][0] = 2.0 * (mQ[VX] * mQ[VZ] - mQ[VY] * mQ[VW]); m[2][1] = 2.0 * (mQ[VY] * mQ[VZ] + mQ[VX] * mQ[VW]); m[2][2] = 1.0 - 2.0 * (mQ[VX] * mQ[VX] + mQ[VY] * mQ[VY]);
 
 	return m;
 }

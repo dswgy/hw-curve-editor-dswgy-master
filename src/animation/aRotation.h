@@ -181,6 +181,17 @@ public:
     friend mat3;
 };
 
+//quat DoubleQuat(const quat& a, const quat& b) {
+//    return a + 2 * (b - a);
+//}
+//
+//quat BisectQuat(const quat& a, const quat& b) {
+//    return (a + b) / 2;
+//}
+//
+//quat LerpQuat(const quat& a, const quat& b, double u) {
+//    return (1 - u) * a + u * b;
+//}
 
 #endif
 

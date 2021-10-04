@@ -74,7 +74,6 @@ void CurveViewer::createGUIWindow()
 		// Reset curve
 		ImGui::Checkbox("Show Control Point", &mShowControlPoint);
 		ImGui::Checkbox("Animate", &mAnimate);
-		//ImGui::Checkbox("setNatural", &mSetNatural);
 		if (ImGui::Button("Reset"))
 		{
 			resetSplineVec3(mSplineVec3);
@@ -538,6 +537,10 @@ void CurveViewer::editRotationKey(int key, vec3 newEuler, ASplineVec3 & eulerSpl
 	rot.FromEulerAngles(static_cast<mat3::RotOrder>(mRotOrder), newEuler * Deg2Rad);
 	quat q = rot.ToQuaternion();
 	quatSpline.editKey(key, q);
+	//std::cout << "VW: " << q[3] << std::endl;
+	//std::cout << "VX: " << q[0] << std::endl;
+	//std::cout << "VY: " << q[1] << std::endl;
+	//std::cout << "VZ: " << q[2] << std::endl;
 }
 
 void CurveViewer::deleteRotationKey(int key, ASplineVec3 & eulerSpline, ASplineQuat & quatSpline)

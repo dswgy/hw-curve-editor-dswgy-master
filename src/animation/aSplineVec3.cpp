@@ -852,6 +852,11 @@ vec3 AEulerLinearInterpolatorVec3::interpolateSegment(
 	// Linear interpolate between key0 and key1
 	// You should convert the angles to find the shortest path for interpolation
 
+	key0 = CalcShortestPath(vec3(0, 0, 0), key0);
+	key1 = CalcShortestPath(key0, key1);
+
+	curveValue = LerpVec3(key0, key1, u);
+
 	return curveValue;
 }
 
@@ -868,6 +873,13 @@ vec3 AEulerCubicInterpolatorVec3::interpolateSegment(
 	// Step1: Get the 4 control points, b0, b1, b2 and b3 from the ctrlPoints vector
 	// Step2: Compute the interpolated value f(u) point using  Bernstein polynomials
 	// You should convert the angles to find the shortest path for interpolation
+
+	b0 = ctrlPoints[4 * segment];
+	b1 = ctrlPoints[4 * segment + 1];
+	b2 = ctrlPoints[4 * segment + 2];
+	b3 = ctrlPoints[4 * segment + 3];
+
+	curveValue = pow((1 - t), 3) * b0 + 3 * t * pow((1 - t), 2) * b1 + 3 * pow(t, 2) * b2 * (1 - t) + pow(t, 3) * b3;
 
 	return curveValue;
 }
@@ -887,6 +899,129 @@ void AEulerCubicInterpolatorVec3::computeControlPoints(
 		vec3 b0, b1, b2, b3;
 
 		// TODO: compute b0, b1, b2, b3
+
+		if (i < (keys.size() - 1) && i > 1) {
+			vec3 p0 = keys[i - 2].second;
+			vec3 p1 = keys[i - 1].second;
+			vec3 p2 = keys[i].second;
+			vec3 p3 = keys[i + 1].second;
+
+			// recalculate p's
+			p0 = CalcShortestPath(vec3(0, 0, 0), p0);
+			p1 = CalcShortestPath(p0, p1);
+			p2 = CalcShortestPath(p1, p2);
+			p3 = CalcShortestPath(p2, p3);
+
+			double t0 = keys[i - 2].first;
+			double t1 = keys[i - 1].first;
+			double t2 = keys[i].first;
+			double t3 = keys[i + 1].first;
+
+			// slope at p1 by averaging slope on the left and right
+			vec3 s_left_p1 = (p1 - p0) / (t1 - t0);
+			vec3 s_right_p1 = (p2 - p1) / (t2 - t1);
+			vec3 s1 = (s_left_p1 + s_right_p1) / 2;
+
+			// slope at p2 by averaging slope on the left and right
+			vec3 s_left_p2 = (p2 - p1) / (t2 - t1);
+			vec3 s_right_p2 = (p3 - p2) / (t3 - t2);
+			vec3 s2 = (s_left_p2 + s_right_p2) / 2;
+
+			// find b
+			b0 = p1;
+			b3 = p2;
+
+			b1 = b0 + s1 / 3;
+			b2 = b3 - s2 / 3;
+
+		} // left end point with more than one segment
+		else if (i == 1 && i != (keys.size() - 1)) {
+			vec3 p1 = keys[i - 1].second;
+			vec3 p2 = keys[i].second;
+			vec3 p3 = keys[i + 1].second;
+
+			// recalculate p's
+			p1 = CalcShortestPath(vec3(0, 0, 0), p1);
+			p2 = CalcShortestPath(p1, p2);
+			p3 = CalcShortestPath(p2, p3);
+
+			double t1 = keys[i - 1].first;
+			double t2 = keys[i].first;
+			double t3 = keys[i + 1].first;
+
+			// slope at p1 is only the slope from right
+			vec3 s_right_p1 = (p2 - p1) / (t2 - t1);
+			vec3 s1 = (s_right_p1) / 1;
+
+			// slope at p2 by averaging slope on the left and right
+			vec3 s_left_p2 = (p2 - p1) / (t2 - t1);
+			vec3 s_right_p2 = (p3 - p2) / (t3 - t2);
+			vec3 s2 = (s_left_p2 + s_right_p2) / 2;
+
+			// find b
+			b0 = p1;
+			b3 = p2;
+
+			b1 = b0 + s1 / 3;
+			b2 = b3 - s2 / 3;
+
+		} // right end point with more than one segment
+		else if (i == (keys.size() - 1) && i != 1) {
+			vec3 p0 = keys[i - 2].second;
+			vec3 p1 = keys[i - 1].second;
+			vec3 p2 = keys[i].second;
+
+			// recalculate p's
+			p0 = CalcShortestPath(vec3(0, 0, 0), p0);
+			p1 = CalcShortestPath(p0, p1);
+			p2 = CalcShortestPath(p1, p2);
+
+			double t0 = keys[i - 2].first;
+			double t1 = keys[i - 1].first;
+			double t2 = keys[i].first;
+
+			// slope at p1 by averaging slope on the left and right
+			vec3 s_left_p1 = (p1 - p0) / (t1 - t0);
+			vec3 s_right_p1 = (p2 - p1) / (t2 - t1);
+			vec3 s1 = (s_left_p1 + s_right_p1) / 2;
+
+			// slope at p2 only the slope from left
+			vec3 s_left_p2 = (p2 - p1) / (t2 - t1);
+			vec3 s2 = (s_left_p2) / 1;
+
+			// find b
+			b0 = p1;
+			b3 = p2;
+
+			b1 = b0 + s1 / 3;
+			b2 = b3 - s2 / 3;
+		}// only one segment
+		else if (i == (keys.size() - 1) && i == 1) {
+			vec3 p1 = keys[i - 1].second;
+			vec3 p2 = keys[i].second;
+
+			// recalculate p's
+			p1 = CalcShortestPath(vec3(0, 0, 0), p1);
+			p2 = CalcShortestPath(p1, p2);
+
+			double t1 = keys[i - 1].first;
+			double t2 = keys[i].first;
+
+			// slope at p1 by averaging slope on the left and right
+			vec3 s_right_p1 = (p2 - p1) / (t2 - t1);
+			vec3 s1 = (s_right_p1) / 1;
+
+			// slope at p2 only the slope from left
+			vec3 s_left_p2 = (p2 - p1) / (t2 - t1);
+			vec3 s2 = (s_left_p2) / 1;
+
+			// find b
+			b0 = p1;
+			b3 = p2;
+
+			b1 = b0 + s1 / 3;
+			b2 = b3 - s2 / 3;
+		}
 
 		ctrlPoints.push_back(b0);
 		ctrlPoints.push_back(b1);

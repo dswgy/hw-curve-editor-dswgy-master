@@ -224,3 +224,20 @@ vec3 operator - (const vec3& a)
  {
      return a + t * (b - a);
  }
+
+ vec3 CalcShortestPath(vec3 a, vec3 b) {
+     vec3 newB;
+ // for each element find the shortest path
+     for (int i = 0; i < 3; i++) {
+         double diff = b[i] - a[i];
+         diff = fmod(diff, 360);
+         if (diff < -180) {
+             diff = diff + 360;
+         }
+         else if (diff > 180) {
+             diff = diff - 360;
+         }
+         newB[i] = a[i] + diff;
+     }
+     return newB;
+ }

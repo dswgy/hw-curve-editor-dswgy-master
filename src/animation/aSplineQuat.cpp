@@ -147,7 +147,25 @@ quat ASplineQuat::getLinearValue(double t)
 
 	// TODO: student implementation goes here
 	// compute the value of a linear quaternion spline at the value of t using slerp
+	quat q0 = mKeys[segment].second;
+	quat q1 = mKeys[segment + 1].second;
 
+
+	double t0 = mKeys[segment].first;
+	double t1 = mKeys[segment + 1].first;
+
+	double u = (t - t0) / (t1 - t0);
+
+	q = quat::Slerp(q0, q1, u);
+
+	//std::cout << "segment: "<<segment << std::endl;
+	//std::cout << "mKeys size: " << mKeys.size() << std::endl;
+	//
+	//std::cout << "VW: " << q[3] << std::endl;
+	//std::cout << "VX: " << q[0] << std::endl;
+	//std::cout << "VY: " << q[1] << std::endl;
+	//std::cout << "VZ: " << q[2] << std::endl;
+	
 	return q;	
 }
 
@@ -164,6 +182,12 @@ void ASplineQuat::createSplineCurveLinear()
 	{
 		q = getLinearValue(t);
 		mCachedCurve.push_back(q);
+	}
+
+	for (int i = 0; i < mKeys.size(); i++) {
+	
+		//std::cout << "time: " << mKeys[i].first << " qVW: " << mKeys[i].second[3] 
+		//	<< " qVX: " << mKeys[i].second[0] << " qVY: " << mKeys[i].second[1] << " qVW: " << mKeys[i].second[2] << std::endl;
 	}
 }
 
@@ -213,6 +237,11 @@ void ASplineQuat::appendKey(const quat& value, bool updateCurve)
         double lastT = mKeys[mKeys.size() - 1].first;
         appendKey(lastT + 1, value, updateCurve);
     }
+	for (int i = 0; i < mKeys.size(); i++) {
+
+		//std::cout << "time: " << mKeys[i].first << " qVW: " << mKeys[i].second[3]
+		//	<< " qVX: " << mKeys[i].second[0] << " qVY: " << mKeys[i].second[1] << " qVZ: " << mKeys[i].second[2] << std::endl;
+	}
 }
 
 int ASplineQuat::insertKey(double time, const quat& value, bool updateCurve)

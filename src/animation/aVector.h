@@ -67,6 +67,7 @@ const vec3 axisZ(0.0f, 0.0f, 1.0f);
 const vec3 vec3Zero(0.0f, 0.0f, 0.0f);
 
 vec3 LerpVec3(vec3 a, vec3 b, double t);
+vec3 CalcShortestPath(vec3 a, vec3 b);
 
 
 #endif

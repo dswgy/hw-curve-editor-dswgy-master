@@ -47,15 +47,14 @@ protected:
 	bool mShowControlPoint;
 	bool mAnimate;
 	bool mHoldLeftMouseButton;
-	bool mSetNatural = false;
 
 	ASplineVec3 mSplineVec3;
 	ASplineVec3 mSplineEuler;
 	ASplineQuat mSplineQuat;
 
 	int mDemo = 0;	// 0 for spline, 1 for rotation
-	int mIfNatural = 0;//0 for clamp, 1 for natural
-	int mCurrentNatural = 0;
+	int mIfNatural = 1;//0 for clamp, 1 for natural
+	int mCurrentNatural = 1;
 
 	std::unique_ptr<Drawable> mKeyPoints;
 	std::unique_ptr<Drawable> mCurveLine;
