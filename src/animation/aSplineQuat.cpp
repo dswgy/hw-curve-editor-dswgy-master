@@ -1,4 +1,4 @@
-#include "ASplineQuat.h"
+ #include "ASplineQuat.h"
 #include <algorithm>
 #pragma warning(disable:4018)
 
@@ -171,7 +171,7 @@ quat ASplineQuat::getLinearValue(double t)
 
 void ASplineQuat::createSplineCurveLinear()
 {
-
+	std::cout << "createSplineCurveLinear" << std::endl;
 	quat q;
 	mCachedCurve.clear();
 	int numKeys = mKeys.size(); 
@@ -186,8 +186,7 @@ void ASplineQuat::createSplineCurveLinear()
 
 	for (int i = 0; i < mKeys.size(); i++) {
 	
-		//std::cout << "time: " << mKeys[i].first << " qVW: " << mKeys[i].second[3] 
-		//	<< " qVX: " << mKeys[i].second[0] << " qVY: " << mKeys[i].second[1] << " qVW: " << mKeys[i].second[2] << std::endl;
+		std::cout << "time: " << mKeys[i].first << " qVW: " << mKeys[i].second[3] << " qVX: " << mKeys[i].second[0] << " qVY: " << mKeys[i].second[1] << " qVW: " << mKeys[i].second[2] << std::endl;
 	}
 }
 

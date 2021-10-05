@@ -1194,9 +1194,12 @@ quat quat::Slerp(const quat& q0, const quat& q1, double u)
     //std::cout << "VY1: " << q1.mQ[VY] << std::endl;
     //std::cout << "VZ1: " << q1.mQ[VZ] << std::endl;
 
+    if (abs(Distance(q0, q1)) > EPSILON) {
+        quat temp = Exp(u * Log(q0.Conjugate() * q1));
+        q = q0 * temp;
+    }
 
-    quat temp = Exp(u * Log(q0.Conjugate() * q1));
-    q = q0 * temp;
+   
 
 
 	return q.Normalize();
@@ -1311,9 +1314,19 @@ void quat::ToAxisAngle (vec3& axis, double& angleRad) const
 	angleRad = 0.0;
 	//TODO: student implementation for converting quaternion to axis/angle representation goes here
     angleRad = 2.0 * acos(mQ[VW]);
-    axis[0] = mQ[VX] / sqrt(1.0 - mQ[VW] * mQ[VW]);
-    axis[1] = mQ[VY] / sqrt(1.0 - mQ[VW] * mQ[VW]);
-    axis[2] = mQ[VZ] / sqrt(1.0 - mQ[VW] * mQ[VW]);
+    if (abs(angleRad) > EPSILON) {
+        
+        axis[0] = mQ[VX] / sqrt(1.0 - mQ[VW] * mQ[VW]);
+        axis[1] = mQ[VY] / sqrt(1.0 - mQ[VW] * mQ[VW]);
+        axis[2] = mQ[VZ] / sqrt(1.0 - mQ[VW] * mQ[VW]);
+    }
+    else {
+        axis[0] = 0;
+        axis[1] = 0;
+        axis[2] = 0;
+    
+    }
+    
 }
 
 void quat::FromAxisAngle (const vec3& axis, double angleRad)
