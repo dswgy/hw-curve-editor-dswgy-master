@@ -1082,95 +1082,14 @@ void quat::FromRotation(const mat3& rot)
     double m20 = rot[2][0]; double m21 = rot[2][1]; double m22 = rot[2][2];
 
     
-    mQ[VW] = 0.5 * sqrt(1 + m00 + m11 + m22);
+    mQ[VW] = 0.5 * sqrt(std::max(0.0, 1.0 + m00 + m11 + m22));
+    mQ[VX] = 0.5 * sqrt(std::max(0.0, 1.0 + m00 - m11 - m22));
+    mQ[VY] = 0.5 * sqrt(std::max(0.0, 1.0 - m00 + m11 - m22));
+    mQ[VZ] = 0.5 * sqrt(std::max(0.0, 1.0 - m00 - m11 + m22));
 
-    //mQ[VX] = (m21 - m12) / (4.0 * mQ[VW]);
-    //mQ[VY] = (m02 - m20) / (4.0 * mQ[VW]);
-    //mQ[VZ] = (m10 - m01) / (4.0 * mQ[VW]);
-
-
-    if (abs(mQ[VW]) > EPSILON) {
-        mQ[VX] = (m21 - m12) / (4.0 * mQ[VW]);
-        mQ[VY] = (m02 - m20) / (4.0 * mQ[VW]);
-        mQ[VZ] = (m10 - m01) / (4.0 * mQ[VW]);
-    }
-    else {
-        if (m00 > 0) {
-            mQ[VX] = 1.0;
-            mQ[VY] = 0.0;
-            mQ[VZ] = 0.0;
-        }
-        else if (m11 > 0){
-            mQ[VX] = 0.0;
-            mQ[VY] = 1.0;
-            mQ[VZ] = 0.0;
-        }
-        else if (m22 > 0) {
-            mQ[VX] = 0.0;
-            mQ[VY] = 0.0;
-            mQ[VZ] = 1.0;
-        } 
-    
-    }
-    
-    //if (m22 < 0) {
-    //    if (m00 > m11) {
-    //        t = 1 + m00 - m11 - m22;
-    //        q = quat(t, m01 + m10, m20 + m02, m12 - m21);
-    //    }
-    //    else {
-    //        t = 1 - m00 + m11 - m22;
-    //        q = quat(m01 + m10, t, m12 + m21, m20 - m02);
-    //    }
-    //}
-    //else {
-    //    if (m00 < -m11) {
-    //        t = 1 - m00 - m11 + m22;
-    //        q = quat(m20 + m02, m12 + m21, t, m01 - m10);
-    //    }
-    //    else {
-    //        t = 1 + m00 + m11 + m22;
-    //        q = quat(m12 - m21, m20 - m02, m01 - m10, t);
-    //    }
-    //}
-    //q *= 0.5 / sqrt(t);
-    //mQ[VW] = q[3];
-    //mQ[VX] = q[0];
-    //mQ[VY] = q[1];
-    //mQ[VZ] = q[2];
-
-    //double trace = rot[0][0] + rot[1][1] + rot[2][2]; // I removed + 1.0f; see discussion with Ethan
-    //if (trace > 0) {// I changed M_EPSILON to 0
-    //    double s = 0.5 / sqrt(trace + 1.0);
-    //    mQ[VW] = 0.25 / s;
-    //    mQ[VX] = (rot[2][1] - rot[1][2]) * s;
-    //    mQ[VY] = (rot[0][2] - rot[2][0]) * s;
-    //    mQ[VZ] = (rot[1][0] - rot[0][1]) * s;
-    //}
-    //else {
-    //    if (rot[0][0] > rot[1][1] && rot[0][0] > rot[2][2]) {
-    //        double s = 2.0 * sqrt(1.0 + rot[0][0] - rot[1][1] - rot[2][2]);
-    //        mQ[VW] = (rot[2][1] - rot[1][2]) / s;
-    //        mQ[VX] = 0.25f * s;
-    //        mQ[VY] = (rot[0][1] + rot[1][0]) / s;
-    //        mQ[VZ] = (rot[0][2] + rot[2][0]) / s;
-    //    }
-    //    else if (rot[1][1] > rot[2][2]) {
-    //        double s = 2.0 * sqrt(1.0f + rot[1][1] - rot[0][0] - rot[2][2]);
-    //        mQ[VW] = (rot[0][2] - rot[2][0]) / s;
-    //        mQ[VX] = (rot[0][1] + rot[1][0]) / s;
-    //        mQ[VY] = 0.25f * s;
-    //        mQ[VZ] = (rot[1][2] + rot[2][1]) / s;
-    //    }
-    //    else {
-    //        double s = 2.0 * sqrt(1.0f + rot[2][2] - rot[0][0] - rot[1][1]);
-    //        mQ[VW] = (rot[1][0] - rot[0][1]) / s;
-    //        mQ[VX] = (rot[0][2] + rot[2][0]) / s;
-    //        mQ[VY] = (rot[1][2] + rot[2][1]) / s;
-    //        mQ[VZ] = 0.25f * s;
-    //    }
-    //}
-    
+    mQ[VX] = std::copysign(mQ[VX], m21 - m12);
+    mQ[VY] = std::copysign(mQ[VY], m02 - m20);
+    mQ[VZ] = std::copysign(mQ[VZ], m10 - m01);
 
 	Normalize();
 }
