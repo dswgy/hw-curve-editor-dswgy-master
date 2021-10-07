@@ -213,144 +213,7 @@ vec3 ASplineVec3::getValue(double t) const
     return v;
 }
 
-int AInterpolatorVec3::getKnotSegment(double t, const std::vector<double>& mKnots) {
-	int segment = 0;
-	bool foundSegment = false;
 
-	if (t < 0.0)
-		t = 0.0;
-
-	int numKnots = mKnots.size();
-	while (!foundSegment) {
-		if (segment == numKnots - 1) {
-			segment = numKnots - 2;
-			foundSegment = true;
-		}
-		else {
-			double keyTime0 = mKnots[segment];
-			double keyTime1 = mKnots[segment + 1];
-			if ((t >= keyTime0) && (t < keyTime1))
-				foundSegment = true;
-			else segment++;
-		}
-	}
-	return segment;
-
-
-}
-
-
-std::vector<double> AInterpolatorVec3::getBSBase(double t, int n, const std::vector<double>& mKnots, int j) {
-
-	std::vector<double> BSBase;
-
-	Eigen::MatrixXd BB(n + 1, n + 2);
-	BB = Eigen::MatrixXd::Zero(n + 1, n + 2);
-
-	//int j = getKnotSegment(t, mKnots);
-
-	for (int row = 0; row < (n+1); row++) {
-		for (int col = n; col >= (n - row); col--) {
-			int mj = j - n + col;
-			if (row == 0) {
-				if (t >= mKnots[mj] && t < mKnots[mj +1]) {
-					BB(row, col) = 1.0;
-				}
-				else {
-					BB(row, col) = 0.0;
-				}
-			}
-			else {
-				if (t < mKnots[mj] || t > mKnots[mj + row + 1]) {
-					BB(row, col) = 0.0;
-				}
-				else {
-					double N0_n_1 = BB(row - 1, col);
-					double N1_n_1 = BB(row - 1, col + 1);
-					BB(row, col) = N0_n_1 * (t - mKnots[mj]) / (mKnots[mj + row] - mKnots[mj]) + N1_n_1 * (mKnots[mj + row + 1] - t) / (mKnots[mj + row + 1] - mKnots[mj + 1]);
-				}
-				
-			}
-		}
-	
-	}
-	std::cout << "BB: \n " << BB << std::endl;
-
-	for (int i = 0; i < (n + 1); i++) {
-		BSBase.push_back(BB(n, i));
-	}
-	return BSBase;
-
-}
-
-std::vector<double> AInterpolatorVec3::getdNBase(double t, int n, const std::vector<double>& mKnots, int l, int j) {
-
-	std::vector<double> BSBase;
-
-	Eigen::MatrixXd BB(n + 1, n + 2);
-	BB = Eigen::MatrixXd::Zero(n + 1, n + 2);
-
-	//int j = getKnotSegment(t, mKnots);
-
-	for (int row = 0; row < (n + 1); row++) {
-		for (int col = n; col >= (n - row); col--) {
-			int mj = j - n + col;
-			if (row == 0) {
-				if (t >= mKnots[mj] && t < mKnots[mj + 1]) {
-					BB(row, col) = 1.0;
-				}
-				else {
-					BB(row, col) = 0.0;
-				}
-			}
-			else {
-				//std::cout << "mj + row + 1: " << mj + row + 1 << std::endl;
-				//std::cout << "mKnots.size(): " << mKnots.size() << std::endl;
-				//std::cout << "j " << j << std::endl;
-				if (t < mKnots[mj] || t > mKnots[mj + row + 1]) {
-					BB(row, col) = 0.0;
-				}
-				else {
-					double N0_n_1 = BB(row - 1, col);
-					double N1_n_1 = BB(row - 1, col + 1);
-					BB(row, col) = N0_n_1 * (t - mKnots[mj]) / (mKnots[mj + row] - mKnots[mj]) + N1_n_1 * (mKnots[mj + row + 1] - t) / (mKnots[mj + row + 1] - mKnots[mj + 1]);
-				}
-
-			}
-		}
-
-	}
-
-	for (int row = (n - l + 1); row < (n + 1); row++) {
-		for (int col = n; col >= (n - row); col--) {
-			int mj = j - n + col;
-			if (row == 0) {
-				if (t >= mKnots[mj] && t < mKnots[mj + 1]) {
-					BB(row, col) = 1.0;
-				}
-				else {
-					BB(row, col) = 0.0;
-				}
-			}
-			else {
-				if (t < mKnots[mj] || t > mKnots[mj + row + 1]) {
-					BB(row, col) = 0.0;
-				}
-				else {
-					double N0_n_1 = BB(row - 1, col);
-					double N1_n_1 = BB(row - 1, col + 1);
-					BB(row, col) = N0_n_1 * row / (mKnots[mj + row] - mKnots[mj]) - N1_n_1 * row / (mKnots[mj + row + 1] - mKnots[mj + 1]);
-				}
-			}
-		}
-	}
-
-	for (int i = 0; i < (n + 1); i++) {
-		BSBase.push_back(BB(n, i));
-	}
-	return BSBase;
-
-}
 
 void ASplineVec3::cacheCurve()
 {
@@ -988,6 +851,145 @@ void AHermiteInterpolatorVec3::computeControlPoints(
 
 }
 
+int AInterpolatorVec3::getKnotSegment(double t, const std::vector<double>& mKnots) {
+	int segment = 0;
+	bool foundSegment = false;
+
+	if (t < 0.0)
+		t = 0.0;
+
+	int numKnots = mKnots.size();
+	while (!foundSegment) {
+		if (segment == numKnots - 1) {
+			segment = numKnots - 2;
+			foundSegment = true;
+		}
+		else {
+			double keyTime0 = mKnots[segment];
+			double keyTime1 = mKnots[segment + 1];
+			if ((t >= keyTime0) && (t < keyTime1))
+				foundSegment = true;
+			else segment++;
+		}
+	}
+	return segment;
+
+
+}
+
+
+std::vector<double> AInterpolatorVec3::getBSBase(double t, int n, const std::vector<double>& mKnots, int j) {
+
+	std::vector<double> BSBase;
+
+	Eigen::MatrixXd BB(n + 1, n + 2);
+	BB = Eigen::MatrixXd::Zero(n + 1, n + 2);
+
+	//int j = getKnotSegment(t, mKnots);
+
+	for (int row = 0; row < (n + 1); row++) {
+		for (int col = n; col >= (n - row); col--) {
+			int mj = j - n + col;
+			if (row == 0) {
+				if (t >= mKnots[mj] && t < mKnots[mj + 1]) {
+					BB(row, col) = 1.0;
+				}
+				else {
+					BB(row, col) = 0.0;
+				}
+			}
+			else {
+				if (t < mKnots[mj] || t > mKnots[mj + row + 1]) {
+					BB(row, col) = 0.0;
+				}
+				else {
+					double N0_n_1 = BB(row - 1, col);
+					double N1_n_1 = BB(row - 1, col + 1);
+					BB(row, col) = N0_n_1 * (t - mKnots[mj]) / (mKnots[mj + row] - mKnots[mj]) + N1_n_1 * (mKnots[mj + row + 1] - t) / (mKnots[mj + row + 1] - mKnots[mj + 1]);
+				}
+
+			}
+		}
+
+	}
+	std::cout << "BB: \n " << BB << std::endl;
+
+	for (int i = 0; i < (n + 1); i++) {
+		BSBase.push_back(BB(n, i));
+	}
+	return BSBase;
+
+}
+
+std::vector<double> AInterpolatorVec3::getdNBase(double t, int n, const std::vector<double>& mKnots, int l, int j) {
+
+	std::vector<double> BSBase;
+
+	Eigen::MatrixXd BB(n + 1, n + 2);
+	BB = Eigen::MatrixXd::Zero(n + 1, n + 2);
+
+	//int j = getKnotSegment(t, mKnots);
+
+	for (int row = 0; row < (n + 1); row++) {
+		for (int col = n; col >= (n - row); col--) {
+			int mj = j - n + col;
+			if (row == 0) {
+				if (t >= mKnots[mj] && t < mKnots[mj + 1]) {
+					BB(row, col) = 1.0;
+				}
+				else {
+					BB(row, col) = 0.0;
+				}
+			}
+			else {
+				//std::cout << "mj + row + 1: " << mj + row + 1 << std::endl;
+				//std::cout << "mKnots.size(): " << mKnots.size() << std::endl;
+				//std::cout << "j " << j << std::endl;
+				if (t < mKnots[mj] || t > mKnots[mj + row + 1]) {
+					BB(row, col) = 0.0;
+				}
+				else {
+					double N0_n_1 = BB(row - 1, col);
+					double N1_n_1 = BB(row - 1, col + 1);
+					BB(row, col) = N0_n_1 * (t - mKnots[mj]) / (mKnots[mj + row] - mKnots[mj]) + N1_n_1 * (mKnots[mj + row + 1] - t) / (mKnots[mj + row + 1] - mKnots[mj + 1]);
+				}
+
+			}
+		}
+
+	}
+
+	for (int row = (n - l + 1); row < (n + 1); row++) {
+		for (int col = n; col >= (n - row); col--) {
+			int mj = j - n + col;
+			if (row == 0) {
+				if (t >= mKnots[mj] && t < mKnots[mj + 1]) {
+					BB(row, col) = 1.0;
+				}
+				else {
+					BB(row, col) = 0.0;
+				}
+			}
+			else {
+				if (t < mKnots[mj] || t > mKnots[mj + row + 1]) {
+					BB(row, col) = 0.0;
+				}
+				else {
+					double N0_n_1 = BB(row - 1, col);
+					double N1_n_1 = BB(row - 1, col + 1);
+					BB(row, col) = N0_n_1 * row / (mKnots[mj + row] - mKnots[mj]) - N1_n_1 * row / (mKnots[mj + row + 1] - mKnots[mj + 1]);
+				}
+			}
+		}
+	}
+
+	for (int i = 0; i < (n + 1); i++) {
+		BSBase.push_back(BB(n, i));
+	}
+	return BSBase;
+
+}
+
 void ABSplineInterpolatorVec3::computeControlPoints(
     const std::vector<ASplineVec3::Key>& keys,
     std::vector<vec3>& ctrlPoints, 
@@ -1053,10 +1055,8 @@ void ABSplineInterpolatorVec3::computeControlPoints(
 			if (row == 0) {
 				std::vector<double> r = getdNBase(t0, n, knots, 2, n);
 
-				for (int col = 0; col < (m + 3); col++) {
-					if (col < n + 1) {
-						A(row, col) = r[col];
-					}
+				for (int col = 0; col < n + 1; col++) {
+					A(row, col) = r[col];
 				}
 			}
 			else if (row == m + 1) {
@@ -1065,6 +1065,7 @@ void ABSplineInterpolatorVec3::computeControlPoints(
 				for (int i = 0; i < knots.size(); i++) {
 					std::cout << knots[i] << " ";
 				}
+				std::cout << "" << std::endl;
 				std::vector<double> r = getBSBase(tm, n, knots, m + 2);
 				for (int col = m - 1; col < (m + 3); col++) {
 					A(row, col) = r[col - (m-1)];
