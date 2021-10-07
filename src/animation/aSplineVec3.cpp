@@ -213,6 +213,145 @@ vec3 ASplineVec3::getValue(double t) const
     return v;
 }
 
+int AInterpolatorVec3::getKnotSegment(double t, const std::vector<double>& mKnots) {
+	int segment = 0;
+	bool foundSegment = false;
+
+	if (t < 0.0)
+		t = 0.0;
+
+	int numKnots = mKnots.size();
+	while (!foundSegment) {
+		if (segment == numKnots - 1) {
+			segment = numKnots - 2;
+			foundSegment = true;
+		}
+		else {
+			double keyTime0 = mKnots[segment];
+			double keyTime1 = mKnots[segment + 1];
+			if ((t >= keyTime0) && (t < keyTime1))
+				foundSegment = true;
+			else segment++;
+		}
+	}
+	return segment;
+
+
+}
+
+
+std::vector<double> AInterpolatorVec3::getBSBase(double t, int n, const std::vector<double>& mKnots, int j) {
+
+	std::vector<double> BSBase;
+
+	Eigen::MatrixXd BB(n + 1, n + 2);
+	BB = Eigen::MatrixXd::Zero(n + 1, n + 2);
+
+	//int j = getKnotSegment(t, mKnots);
+
+	for (int row = 0; row < (n+1); row++) {
+		for (int col = n; col >= (n - row); col--) {
+			int mj = j - n + col;
+			if (row == 0) {
+				if (t >= mKnots[mj] && t < mKnots[mj +1]) {
+					BB(row, col) = 1.0;
+				}
+				else {
+					BB(row, col) = 0.0;
+				}
+			}
+			else {
+				if (t < mKnots[mj] || t > mKnots[mj + row + 1]) {
+					BB(row, col) = 0.0;
+				}
+				else {
+					double N0_n_1 = BB(row - 1, col);
+					double N1_n_1 = BB(row - 1, col + 1);
+					BB(row, col) = N0_n_1 * (t - mKnots[mj]) / (mKnots[mj + row] - mKnots[mj]) + N1_n_1 * (mKnots[mj + row + 1] - t) / (mKnots[mj + row + 1] - mKnots[mj + 1]);
+				}
+				
+			}
+		}
+	
+	}
+	std::cout << "BB: \n " << BB << std::endl;
+
+	for (int i = 0; i < (n + 1); i++) {
+		BSBase.push_back(BB(n, i));
+	}
+	return BSBase;
+
+}
+
+std::vector<double> AInterpolatorVec3::getdNBase(double t, int n, const std::vector<double>& mKnots, int l, int j) {
+
+	std::vector<double> BSBase;
+
+	Eigen::MatrixXd BB(n + 1, n + 2);
+	BB = Eigen::MatrixXd::Zero(n + 1, n + 2);
+
+	//int j = getKnotSegment(t, mKnots);
+
+	for (int row = 0; row < (n + 1); row++) {
+		for (int col = n; col >= (n - row); col--) {
+			int mj = j - n + col;
+			if (row == 0) {
+				if (t >= mKnots[mj] && t < mKnots[mj + 1]) {
+					BB(row, col) = 1.0;
+				}
+				else {
+					BB(row, col) = 0.0;
+				}
+			}
+			else {
+				//std::cout << "mj + row + 1: " << mj + row + 1 << std::endl;
+				//std::cout << "mKnots.size(): " << mKnots.size() << std::endl;
+				//std::cout << "j " << j << std::endl;
+				if (t < mKnots[mj] || t > mKnots[mj + row + 1]) {
+					BB(row, col) = 0.0;
+				}
+				else {
+					double N0_n_1 = BB(row - 1, col);
+					double N1_n_1 = BB(row - 1, col + 1);
+					BB(row, col) = N0_n_1 * (t - mKnots[mj]) / (mKnots[mj + row] - mKnots[mj]) + N1_n_1 * (mKnots[mj + row + 1] - t) / (mKnots[mj + row + 1] - mKnots[mj + 1]);
+				}
+
+			}
+		}
+
+	}
+
+	for (int row = (n - l + 1); row < (n + 1); row++) {
+		for (int col = n; col >= (n - row); col--) {
+			int mj = j - n + col;
+			if (row == 0) {
+				if (t >= mKnots[mj] && t < mKnots[mj + 1]) {
+					BB(row, col) = 1.0;
+				}
+				else {
+					BB(row, col) = 0.0;
+				}
+			}
+			else {
+				if (t < mKnots[mj] || t > mKnots[mj + row + 1]) {
+					BB(row, col) = 0.0;
+				}
+				else {
+					double N0_n_1 = BB(row - 1, col);
+					double N1_n_1 = BB(row - 1, col + 1);
+					BB(row, col) = N0_n_1 * row / (mKnots[mj + row] - mKnots[mj]) - N1_n_1 * row / (mKnots[mj + row + 1] - mKnots[mj + 1]);
+				}
+			}
+		}
+	}
+
+	for (int i = 0; i < (n + 1); i++) {
+		BSBase.push_back(BB(n, i));
+	}
+	return BSBase;
+
+}
+
 void ASplineVec3::cacheCurve()
 {
     mInterpolator->interpolate(mKeys, mCtrlPoints, mCachedCurve);
@@ -483,6 +622,57 @@ vec3 ABSplineInterpolatorVec3::interpolateSegment(
 	// Step 2: compute the n nonzero Bspline Basis functions N given j
 	// Step 3: get the corresponding control points from the ctrlPoints vector
 	// Step 4: compute the Bspline curveValue at time t
+
+	int n = 3;
+	int m = keys.size() - 1;
+	double t = u * (keys[segment + 1].first - keys[segment].first) + keys[segment].first;
+
+	// set knots
+	std::vector<double> knots;
+	for (int i = 0; i < keys.size(); i++) {
+		knots.push_back(keys[i].first);
+
+	}
+	double t0 = knots[0];
+	double t1 = knots[1];
+	double tm = knots[m];
+	double tm_1 = knots[m - 1];
+
+	for (int k = 1; k <= n; k++) {
+
+		knots.insert(knots.begin(), t0 - k * (t1 - t0));
+		knots.push_back(tm + k * (tm - tm_1));
+
+	}
+
+	int j = getKnotSegment(t, knots);
+
+	//std::cout << "t: " << t << std::endl;
+	//std::cout << "n: " << n << std::endl;
+	//std::cout << "j: " << j << std::endl;
+
+	//std::vector<double> r = getBSBase(t, n, knots, j);
+
+	vec3 c0;
+	vec3 c1;
+	vec3 c2;
+	vec3 c3;
+	c0 = ctrlPoints[segment];
+	c1 = ctrlPoints[segment + 1];
+	c2 = ctrlPoints[segment + 2];
+	c3 = ctrlPoints[segment + 3];
+
+	//curveValue = c0 * r[0] + c1 * r[1] + c2 * r[2] + c3 * r[3];
+
+
+	////////////
+	curveValue = c0 * pow(1-u, 3.0) / 6.0 + c1 * (4 - 6 * pow(u, 2) + 3 * pow(u, 3)) / 6.0
+		+ c2 * (1 + 3 * u + 3 * pow(u,2) - 3 * pow(u, 3)) / 6.0 + c3 * pow(u, 3) / 6.0;
+
+	//std::cout << "c0: " << c0[0] << " " << c0[1] << " " << c0[2] << std::endl;
+	//std::cout << "c1: " << c1[0] << " " << c1[1] << " " << c1[2] << std::endl;
+	//std::cout << "c2: " << c2[0] << " " << c2[1] << " " << c2[2] << std::endl;
+	//std::cout << "c3: " << c3[0] << " " << c3[1] << " " << c3[2] << std::endl;
 
 	return curveValue;
 }
@@ -832,9 +1022,110 @@ void ABSplineInterpolatorVec3::computeControlPoints(
 
 	// Hint: Do not use push_back() to insert control points here because the vector has been resized
 
+	int n = 3;
+	int m = keys.size() - 1;
 
+	std::vector<double> knots;
+	for (int i = 0; i < keys.size(); i++) {
+		knots.push_back(keys[i].first);
+	
+	}
+	double t0 = knots[0];
+	double t1 = knots[1];
+	double tm = knots[m];
+	double tm_1 = knots[m - 1];
+
+	for (int k = 1; k <= n; k++) {
+
+		knots.insert(knots.begin(), t0 - k * (t1 -t0));
+		knots.push_back(tm + k * (tm - tm_1));
+
+	}
+
+	Eigen::MatrixXd A(m + 3, m + 3);
+
+	A = Eigen::MatrixXd::Zero(m + 3, m + 3);
+	std::cout << "m: " << m << std::endl;
+	std::cout << "knots.size(): " << knots.size() << std::endl;
+
+	for (int row = 0; row < (m + 3); row++) {
+		
+			if (row == 0) {
+				std::vector<double> r = getdNBase(t0, n, knots, 2, n);
+
+				for (int col = 0; col < (m + 3); col++) {
+					if (col < n + 1) {
+						A(row, col) = r[col];
+					}
+				}
+			}
+			else if (row == m + 1) {
+				std::cout << "tm: " << tm << " n: " << n << " m+2 " << m + 2 << std::endl;
+				std::cout << " knots:" << std::endl;
+				for (int i = 0; i < knots.size(); i++) {
+					std::cout << knots[i] << " ";
+				}
+				std::vector<double> r = getBSBase(tm, n, knots, m + 2);
+				for (int col = m - 1; col < (m + 3); col++) {
+					A(row, col) = r[col - (m-1)];
+				}
+			}
+			else if (row == m + 2) {
+				
+				std::vector<double> r = getdNBase(tm, n, knots, 2, m + 2 );
+				for (int col = m - 1; col < (m + 3); col++) {
+					A(row, col) = r[col - (m - 1)];
+				}
+			}
+			else {
+				double tempt = keys[row - 1].first;
+				std::vector<double> r = getBSBase(tempt, n, knots, row + 2);
+
+				for (int col = row - 1; col < (row + 3); col++) {
+					A(row, col) = r[col - (row - 1)];
+				}
+			}
+	}
+
+	// find D
+	Eigen::MatrixXd D(m + 3, 3);
+
+	for (int row = 0; row < m + 3; row++) {
+		// first row
+		if (row == 0) {
+			D(row, 0) = 0.0;
+			D(row, 1) = 0.0;
+			D(row, 2) = 0.0;
+		}// last row of A
+		else if (row == m + 2) {
+			D(row, 0) = 0.0;
+			D(row, 1) = 0.0;
+			D(row, 2) = 0.0;
+		}// other rows
+		else {
+			D(row, 0) = keys[row - 1].second[0];
+			D(row, 1) = keys[row - 1].second[1];
+			D(row, 2) = keys[row - 1].second[2];
+		}
+		std::cout << "D: " << D(row, 0) << " " << D(row, 1) << " " << D(row, 2) << std::endl;
+	}
+
+	// Step 3: Solve AC=D for C
+	Eigen::MatrixXd C(m + 3, 3);
+	std::cout << "Here is the matrix A:\n" << A << std::endl;
+
+	C = (A.inverse()) * D;
 
 	//
+		// Step 4: Save control points in ctrlPoints
+	for (int i = 0; i < m + 3; i++) {
+		ctrlPoints[i][0] = C(i, 0);
+		ctrlPoints[i][1] = C(i, 1);
+		ctrlPoints[i][2] = C(i, 2);
+		//std::cout << "C: " << C(i, 0) << " " << C(i, 1) << " " << C(i, 2) << std::endl;
+
+
+	}
 
 }
 

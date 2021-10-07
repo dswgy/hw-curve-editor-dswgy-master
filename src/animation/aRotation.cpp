@@ -1087,6 +1087,7 @@ void quat::FromRotation(const mat3& rot)
     mQ[VY] = 0.5 * sqrt(std::max(0.0, 1.0 - m00 + m11 - m22));
     mQ[VZ] = 0.5 * sqrt(std::max(0.0, 1.0 - m00 - m11 + m22));
 
+
     mQ[VX] = std::copysign(mQ[VX], m21 - m12);
     mQ[VY] = std::copysign(mQ[VY], m02 - m20);
     mQ[VZ] = std::copysign(mQ[VZ], m10 - m01);
@@ -1113,11 +1114,17 @@ quat quat::Slerp(const quat& q0, const quat& q1, double u)
     //std::cout << "VY1: " << q1.mQ[VY] << std::endl;
     //std::cout << "VZ1: " << q1.mQ[VZ] << std::endl;
 
-    if (abs(Distance(q0, q1)) > EPSILON) {
-        quat temp = Exp(u * Log(q0.Conjugate() * q1));
-        q = q0 * temp;
-    }
+    //if (abs(Distance(q0, q1)) > EPSILON) {
+    //    quat temp = Exp(u * Log(q0.Conjugate() * q1));
+    //    q = q0 * temp;
+    //}
+    // 
+    quat temp = Exp(u * Log(q0.Conjugate() * q1));
+    q = q0 * temp;
 
+    //double angleRad = acos(Dot(q0, q1));
+
+    //q = sin((1 - u) * angleRad) * q0 / sin(angleRad) + sin(angleRad * u) * q1 / sin(angleRad);
    
 
 
@@ -1127,7 +1134,7 @@ quat quat::SDouble(const quat& a, const quat& b)
 {
 	quat q = a;
 	//TODO: student implementation ofSDouble goes here
-
+    q = (2.0 * (Dot(a, b) * b)) - a;
 	return q.Normalize();
 }
 
@@ -1135,6 +1142,7 @@ quat quat::SBisect(const quat& a, const quat& b)
 {
 	quat q = a;
 	//TODO: student implementation of SBisect goes here
+    q = (a + b) / abs((a+b).Length());
 
 	return q.Normalize();
 }
@@ -1145,6 +1153,20 @@ quat quat::Scubic(const quat& b0, const quat& b1, const quat& b2, const quat& b3
 	quat result = b0;
 	quat b01, b11, b21, b02, b12, b03;
 	// TODO: Return the result of Scubic based on the cubic quaternion curve control points b0, b1, b2 and b3
+    b01 = Slerp(b0, b1, u);
+    b11 = Slerp(b1, b2, u);
+    b21 = Slerp(b2, b3, u);
+    b02 = Slerp(b01, b11, u);
+    b12 = Slerp(b11, b21, u);
+    b03 = Slerp(b02, b12, u);
+
+    //std::cout << "=====================" << std::endl;
+    //std::cout << "b0W: " << b0[3] << std::endl;
+    //std::cout << "b0X: " << b0[0] << std::endl;
+    //std::cout << "b0Y: " << b0[1] << std::endl;
+    //std::cout << "b0Z: " << b0[2] << std::endl;
+
+    result = b03;
 
 	return result.Normalize(); // result should be of unit length
 }

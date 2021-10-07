@@ -31,6 +31,7 @@ public:
     InterpolationType getInterpolationType() const;
 
     vec3 getValue(double t) const;
+    
 
     void editControlPoint(int ctrlPointID, const vec3& value);
     void appendKey(double time, const vec3& value, bool updateCurve = true);
@@ -58,6 +59,8 @@ public:
 	vec3* getCachedCurveData();
 	vec3* getControlPointsData();
 
+
+
 protected:
     bool mLooping;
     AInterpolatorVec3* mInterpolator;
@@ -65,6 +68,7 @@ protected:
     std::vector<vec3> mCtrlPoints;
     std::vector<vec3> mCachedCurve;
     vec3 mStartPoint, mEndPoint; // for controlling end point behavior
+
 };
 
 // class for implementing different interpolation algorithms
@@ -92,6 +96,13 @@ public:
     void setFramerate(double fps);
     double getFramerate() const;
     double getDeltaTime() const; 
+
+    int getKnotSegment(double t, const std::vector<double>& mKnots);
+
+    std::vector<double> getBSBase(double t, int n, const std::vector<double>& mKnots, int j);
+
+    std::vector<double> getdNBase(double t, int n, const std::vector<double>& mKnots, int l, int j);
+
 
 protected:
     AInterpolatorVec3(ASplineVec3::InterpolationType t);

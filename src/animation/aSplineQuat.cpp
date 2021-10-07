@@ -131,6 +131,111 @@ void ASplineQuat::computeControlPoints(quat& startQuat, quat& endQuat)
 		//  as was used with the SplineVec implementation
 		//  Hint: use the SDouble, SBisect and Slerp to compute b1 and b2
 
+		// middle segment with more than one segment
+		std::cout << "===== segment: " << segment <<" =======" << std::endl;
+
+		if (segment > 0 && segment != numKeys - 2) {
+			q_1 = mKeys[segment - 1].second;
+			q0 = mKeys[segment].second;
+			q1 = mKeys[segment + 1].second;
+			q2 = mKeys[segment + 2].second;
+
+			quat q_prim0 = quat::SDouble(q2, q1);
+			quat q_prim1 = quat::SDouble(q_1, q0);
+
+			quat q_star0 = quat::SBisect(q0, q_prim0);
+			quat q_star1 = quat::SBisect(q_prim1, q1);
+
+			b0 = q0;
+			b1 = quat::Slerp(q0, q_star1, 1.0 / 3.0);
+			b2 = quat::Slerp(q1, q_star0, 1.0 / 3.0);
+			b3 = q1;
+			std::cout << "middle" << std::endl;
+
+			//std::cout << "q_star0: " << q_star0[3] << std::endl;
+			//std::cout << "q_star0: " << q_star0[0] << std::endl;
+			//std::cout << "q_star0: " << q_star0[1] << std::endl;
+			//std::cout << "q_star0: " << q_star0[2] << std::endl;
+			//std::cout << "q_star1: " << q_star1[3] << std::endl;
+			//std::cout << "q_star1: " << q_star1[0] << std::endl;
+			//std::cout << "q_star1: " << q_star1[1] << std::endl;
+			//std::cout << "q_star1: " << q_star1[2] << std::endl;
+
+
+			
+		}// left end point with more than one segment
+		else if(segment == 0 && segment != numKeys - 2) {
+			q0 = mKeys[segment].second;
+			q1 = mKeys[segment + 1].second;
+			q2 = mKeys[segment + 2].second;
+
+			quat q_prim0 = quat::SDouble(q2, q1);
+			quat q_prim1 = q1;
+
+			quat q_star0 = quat::SBisect(q0, q_prim0);
+			quat q_star1 = quat::SBisect(q_prim1, q1);
+
+			b0 = q0;
+			b1 = quat::Slerp(q0, q_star1, 1.0 / 3.0);
+			b2 = quat::Slerp(q1, q_star0, 1.0 / 3.0);
+			b3 = q1;
+			std::cout << "left" << std::endl;
+		
+		}// right end point with more than one segment
+		else if (segment == numKeys - 2 && segment != 0) {
+			q_1 = mKeys[segment - 1].second;
+			q0 = mKeys[segment].second;
+			q1 = mKeys[segment + 1].second;
+
+			quat q_prim0 = q0;
+			quat q_prim1 = quat::SDouble(q_1, q0);
+
+			quat q_star0 = quat::SBisect(q0, q_prim0);
+			quat q_star1 = quat::SBisect(q_prim1, q1);
+
+			b0 = q0;
+			b1 = quat::Slerp(q0, q_star1, 1.0 / 3.0);
+			b2 = quat::Slerp(q1, q_star0, 1.0 / 3.0);
+			b3 = q1;
+			std::cout << "right" << std::endl;
+
+		}// only one segment
+		else if (segment == numKeys - 2 && segment == 0) {
+			q0 = mKeys[segment].second;
+			q1 = mKeys[segment + 1].second;
+
+			quat q_prim0 = q0;
+			quat q_prim1 = q1;
+
+			quat q_star0 = quat::SBisect(q0, q_prim0);
+			quat q_star1 = quat::SBisect(q_prim1, q1);
+
+			b0 = q0;
+			b1 = quat::Slerp(q0, q_star1, 1.0 / 3.0);
+			b2 = quat::Slerp(q1, q_star0, 1.0 / 3.0);
+			b3 = q1;
+			//std::cout << "calculated" << std::endl;
+
+		}
+		std::cout << "b0VW: " << b0[3]<< std::endl;
+		std::cout << "b0VX: " << b0[0] << std::endl;
+		std::cout << "b0VY: " << b0[1] << std::endl;
+		std::cout << "b0VZ: " << b0[2] << std::endl;
+		std::cout << "b1VW: " << b1[3] << std::endl;
+		std::cout << "b1VX: " << b1[0] << std::endl;
+		std::cout << "b1VY: " << b1[1] << std::endl;
+		std::cout << "b1VZ: " << b1[2] << std::endl;
+		std::cout << "b2VW: " << b2[3] << std::endl;
+		std::cout << "b2VX: " << b2[0] << std::endl;
+		std::cout << "b2VY: " << b2[1] << std::endl;
+		std::cout << "b2VZ: " << b2[2] << std::endl;
+		std::cout << "b3VW: " << b3[3] << std::endl;
+		std::cout << "b3VX: " << b3[0] << std::endl;
+		std::cout << "b3VY: " << b3[1] << std::endl;
+		std::cout << "b3VZ: " << b3[2] << std::endl;
+		
+
+
 
 		mCtrlPoints.push_back(b0);
 		mCtrlPoints.push_back(b1);
@@ -198,6 +303,22 @@ quat ASplineQuat::getCubicValue(double t)
 
 	// TODO: student implementation goes here
 	// compute the value of a cubic quaternion spline at the value of t using Scubic
+	b0 = mCtrlPoints[4 * segment];
+	b1 = mCtrlPoints[4 * segment + 1];
+	b2 = mCtrlPoints[4 * segment + 2];
+	b3 = mCtrlPoints[4 * segment + 3];
+	double t0 = mKeys[segment].first;
+	double t1 = mKeys[segment + 1].first;
+
+	double u = (t - t0) / (t1 - t0);
+
+	q = quat::Scubic(b0, b1, b2, b3, u);
+
+	//std::cout << "====================="<< std::endl;
+	//std::cout << "q: " << q[3] << std::endl;
+	//std::cout << "q: " << q[0] << std::endl;
+	//std::cout << "q: " << q[1] << std::endl;
+	//std::cout << "q: " << q[2] << std::endl;
 
 	return q;
 }
