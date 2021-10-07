@@ -165,12 +165,14 @@ void ASplineQuat::computeControlPoints(quat& startQuat, quat& endQuat)
 			
 		}// left end point with more than one segment
 		else if(segment == 0 && segment != numKeys - 2) {
+			
 			q0 = mKeys[segment].second;
 			q1 = mKeys[segment + 1].second;
 			q2 = mKeys[segment + 2].second;
+			q_1 = quat::SDouble(q1, q0);
 
 			quat q_prim0 = quat::SDouble(q2, q1);
-			quat q_prim1 = q1;
+			quat q_prim1 = quat::SDouble(q_1, q0);
 
 			quat q_star0 = quat::SBisect(q0, q_prim0);
 			quat q_star1 = quat::SBisect(q_prim1, q1);
@@ -186,8 +188,9 @@ void ASplineQuat::computeControlPoints(quat& startQuat, quat& endQuat)
 			q_1 = mKeys[segment - 1].second;
 			q0 = mKeys[segment].second;
 			q1 = mKeys[segment + 1].second;
+			q2 = quat::SDouble(q0, q1);
 
-			quat q_prim0 = q0;
+			quat q_prim0 = quat::SDouble(q2, q1);
 			quat q_prim1 = quat::SDouble(q_1, q0);
 
 			quat q_star0 = quat::SBisect(q0, q_prim0);
@@ -203,9 +206,11 @@ void ASplineQuat::computeControlPoints(quat& startQuat, quat& endQuat)
 		else if (segment == numKeys - 2 && segment == 0) {
 			q0 = mKeys[segment].second;
 			q1 = mKeys[segment + 1].second;
+			q_1 = quat::SDouble(q1, q0);
+			q2 = quat::SDouble(q0, q1);
 
-			quat q_prim0 = q0;
-			quat q_prim1 = q1;
+			quat q_prim0 = quat::SDouble(q2, q1);
+			quat q_prim1 = quat::SDouble(q_1, q0);
 
 			quat q_star0 = quat::SBisect(q0, q_prim0);
 			quat q_star1 = quat::SBisect(q_prim1, q1);

@@ -891,7 +891,7 @@ std::vector<double> AInterpolatorVec3::getBSBase(double t, int n, const std::vec
 		for (int col = n; col >= (n - row); col--) {
 			int mj = j - n + col;
 			if (row == 0) {
-				if (t >= mKnots[mj] && t < mKnots[mj + 1]) {
+				if (t >= mKnots[mj] && t <= mKnots[mj + 1]) {
 					BB(row, col) = 1.0;
 				}
 				else {
@@ -934,7 +934,7 @@ std::vector<double> AInterpolatorVec3::getdNBase(double t, int n, const std::vec
 		for (int col = n; col >= (n - row); col--) {
 			int mj = j - n + col;
 			if (row == 0) {
-				if (t >= mKnots[mj] && t < mKnots[mj + 1]) {
+				if (t >= mKnots[mj] && t <= mKnots[mj + 1]) {
 					BB(row, col) = 1.0;
 				}
 				else {
@@ -963,7 +963,7 @@ std::vector<double> AInterpolatorVec3::getdNBase(double t, int n, const std::vec
 		for (int col = n; col >= (n - row); col--) {
 			int mj = j - n + col;
 			if (row == 0) {
-				if (t >= mKnots[mj] && t < mKnots[mj + 1]) {
+				if (t >= mKnots[mj] && t <= mKnots[mj + 1]) {
 					BB(row, col) = 1.0;
 				}
 				else {
