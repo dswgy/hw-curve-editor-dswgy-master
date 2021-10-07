@@ -1092,6 +1092,41 @@ void quat::FromRotation(const mat3& rot)
     mQ[VY] = std::copysign(mQ[VY], m02 - m20);
     mQ[VZ] = std::copysign(mQ[VZ], m10 - m01);
 
+ /*   double temp = std::max(m00, m11);
+    double maxT = std::max(temp, m22);
+
+    double trace = m00 + m11 + m22 + 1.0;
+    
+
+    if (trace > 0) {
+        double s = sqrt(trace);
+        mQ[VW] = 0.5 * s;
+        mQ[VX] = (m21 - m12) / (2.0 * s);
+        mQ[VY] = (m02 - m20) / (2.0 * s);
+        mQ[VZ] = (m10 - m01) / (2.0 * s);
+    
+    }
+    else {
+        if (maxT == m00) { 
+            mQ[VX] = 0.5 * sqrt(m00 - m11 - m22 + 1.0);
+            mQ[VY] = (m01 + m10) / (4.0 * mQ[VX]);
+            mQ[VZ] = (m02 + m20) / (4.0 * mQ[VX]);
+            mQ[VW] = (m21 - m12) / (4.0 * mQ[VX]);
+        }
+        else if (maxT == m11) {
+            mQ[VY] = 0.5 * sqrt(m11 - m00 - m22 + 1.0);
+            mQ[VX] = (m01 + m10) / (4.0 * mQ[VY]);
+            mQ[VZ] = (m12 + m21) / (4.0 * mQ[VY]);
+            mQ[VW] = (m02 - m20) / (4.0 * mQ[VY]);
+        }
+        else if (maxT == m22) {
+            mQ[VZ] = 0.5 * sqrt(m22 - m00 - m11 + 1.0);
+            mQ[VX] = (m02 + m20) / (4.0 * mQ[VZ]);
+            mQ[VY] = (m21 + m12) / (4.0 * mQ[VZ]);
+            mQ[VW] = (m10 - m01) / (4.0 * mQ[VZ]);
+        }
+    }*/
+
 	Normalize();
 }
 
