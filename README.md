@@ -24,3 +24,5 @@ Part 2
 All Feature implemented in Part 2.
 Part1 optional part B-Spline also implemented
 Please read part 2 document in HomeworkDoc folder.
+the solution is in Build file 
+release file is the original domo folder NOT the assignment
